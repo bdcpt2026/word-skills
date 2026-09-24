@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Skills Flashcards</title>
+<style>
+:root {
+  --mint:#cfe8d6;
+  --mint-dark:#6e9f85;
+  --yellow:#f6edb5;
+  --cream:#fffaf0;
+  --paper:#fffdf7;
+  --ink:#38413d;
+  --soft:#7a857f;
+  --line:#c8d2ca;
+  --wrong:#f2cbc5;
+  --right:#cfe9d6;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Georgia, "Times New Roman", serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(207,232,214,.7), transparent 28%),
+    radial-gradient(circle at 80% 20%, rgba(246,237,181,.7), transparent 26%),
+    var(--cream);
+  min-height:100vh;
+}
+button,input,select{font:inherit}
+.app{max-width:900px;margin:0 auto;padding:28px 18px 50px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:24px}
+.top-left{display:flex;align-items:center;gap:12px}
+.back-btn{
+  width:42px;height:42px;border-radius:50%;border:1px solid var(--line);
+  background:rgba(255,253,247,.95);cursor:pointer;font-size:1.35rem;line-height:1;
+  display:grid;place-items:center;box-shadow:0 5px 14px rgba(70,85,75,.08);
+  transition:.18s;
+}
+.back-btn:hover{transform:translateX(-2px);border-color:var(--mint-dark);background:var(--mint)}
+.brand{font-size:1.3rem;font-weight:bold;letter-spacing:.03em}
+.small{font-size:.88rem;color:var(--soft)}
+.panel{background:rgba(255,253,247,.92);border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:0 12px 30px rgba(70,85,75,.08)}
+h1{font-size:2rem;margin:0 0 8px}
+h2{margin:0 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.choice{border:1px solid var(--line);background:var(--paper);border-radius:18px;padding:20px;cursor:pointer;text-align:left;transition:.18s}
+.choice:hover{transform:translateY(-3px);border-color:var(--mint-dark);box-shadow:0 8px 20px rgba(80,115,94,.12)}
+.choice{position:relative}
+.choice.selected{
+  transform:translateY(-3px) scale(1.025);
+  border:3px solid var(--mint-dark);
+  background:linear-gradient(145deg,#dcefe1,#fff7c9);
+  box-shadow:0 0 0 5px rgba(110,159,133,.13),0 14px 28px rgba(75,105,88,.18);
+}
+.choice.selected::after{
+  content:"✓";
+  position:absolute;
+  top:11px;
+  right:13px;
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:var(--mint-dark);
+  color:white;
+  font-weight:bold;
+  font-family:Arial,sans-serif;
+}
+.choice strong{display:block;font-size:1.1rem;margin-bottom:5px}.choice .small{display:block}
+.badge{display:block;width:max-content;background:var(--mint);padding:4px 9px;border-radius:999px;font-size:.8rem;margin-top:10px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:10px 17px;cursor:pointer}
+.btn.primary{background:var(--mint);border-color:#a8c8b0}
+.btn.yellow{background:var(--yellow);border-color:#ddcf83}
+.btn:disabled{opacity:.45;cursor:default}
+.hidden{display:none!important}
+.flash-wrap{perspective:1200px;margin:24px auto 8px;max-width:650px}
+.flashcard{position:relative;min-height:340px;transform-style:preserve-3d;transition:transform .48s;cursor:pointer}
+.flashcard.flipped{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;border:1px solid var(--line);border-radius:28px;background:var(--paper);box-shadow:0 16px 36px rgba(70,85,75,.10);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:38px;text-align:center}
+.back{transform:rotateY(180deg);background:linear-gradient(160deg,#fffdf7,#f4f8ef)}
+.bigword{font-size:clamp(2rem,6vw,3.4rem);line-height:1.15}
+.zh{font-size:clamp(1.5rem,5vw,2.4rem);line-height:1.3}
+.meta{margin-top:16px;color:var(--soft);font-size:.95rem}
+.note-box{margin-top:20px;padding-top:14px;border-top:1px dashed var(--line);width:100%;font-size:.95rem;line-height:1.55}
+.progress{height:8px;background:#e9ede7;border-radius:99px;overflow:hidden;margin:14px 0 4px}
+.progress > div{height:100%;background:var(--mint-dark);width:0%}
+.modebar{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:7px 12px;border-radius:999px;background:#edf2ed;font-size:.84rem}
+.spell-card{max-width:650px;margin:24px auto;text-align:center}
+.spell-box{width:min(420px,100%);padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:white;font-size:1.2rem;text-align:center;margin-top:20px}
+.letter-grid{
+  display:flex;flex-wrap:wrap;justify-content:center;align-items:center;
+  gap:7px;margin:24px auto 4px;max-width:720px;
+}
+.letter-box{
+  width:38px;height:46px;border:0;border-bottom:3px solid #8fae9b;
+  background:rgba(255,255,255,.76);border-radius:8px 8px 3px 3px;
+  text-align:center;font-size:1.35rem;font-weight:bold;color:var(--ink);
+  outline:none;text-transform:lowercase;transition:.15s;
+}
+.letter-box:focus{
+  border-bottom-color:var(--mint-dark);background:#fff;
+  box-shadow:0 4px 0 rgba(110,159,133,.12);
+}
+.letter-box.correct-box{background:var(--right);border-bottom-color:#5d9671}
+.letter-box.wrong-box{background:var(--wrong);border-bottom-color:#b66d64}
+.answer-static{font-size:1.25rem;font-weight:bold;padding:0 2px;color:#7c847f}
+.answer-space{width:14px;display:inline-block}
+.word-gap{width:20px;display:inline-block}
+.feedback{min-height:34px;margin-top:12px;font-weight:bold}
+.right{color:#3b7550} .wrong{color:#9b5148}
+.footer-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.summary{text-align:center;padding:28px}
+.summary .num{font-size:3rem;font-weight:bold}
+.checkrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.checkrow label{font-size:.92rem}
+select{border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:white}
+@media(max-width:600px){.face{padding:24px;min-height:310px} .flashcard{min-height:310px}}
+
+/* ===== Mobile-friendly refinements ===== */
+html, body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  touch-action: manipulation;
+}
+
+button,
+.choice,
+.back-btn,
+.btn {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+.btn,
+.choice,
+.back-btn,
+.letter-box {
+  min-height: 44px;
+}
+
+.app {
+  width: 100%;
+  max-width: 900px;
+}
+
+.panel,
+.face,
+.choice {
+  max-width: 100%;
+}
+
+.bigword,
+.zh,
+.note-box,
+.choice strong,
+.small,
+.meta {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.letter-grid {
+  width: 100%;
+  padding: 0 4px;
+  row-gap: 12px;
+}
+
+.letter-box {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 700px) {
+  .app {
+    padding: 14px 12px calc(28px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    margin-bottom: 14px;
+    gap: 8px;
+  }
+
+  .top-left {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .brand {
+    font-size: 1.08rem;
+    line-height: 1.2;
+  }
+
+  .topbar .small {
+    font-size: .76rem;
+  }
+
+  .back-btn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .panel {
+    padding: 18px 14px;
+    border-radius: 20px;
+  }
+
+  h1 {
+    font-size: 1.7rem;
+  }
+
+  h2 {
+    font-size: 1.45rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .choice {
+    padding: 17px 16px;
+    border-radius: 16px;
+  }
+
+  .choice.selected {
+    transform: none;
+  }
+
+  .choice.selected::after {
+    top: 10px;
+    right: 11px;
+  }
+
+  .controls,
+  .footer-actions {
+    gap: 8px;
+  }
+
+  .btn {
+    padding: 11px 16px;
+    min-width: 92px;
+  }
+
+  .flash-wrap,
+  .spell-card {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 16px;
+  }
+
+  .flashcard {
+    min-height: 300px;
+  }
+
+  .face {
+    min-height: 300px;
+    padding: 24px 18px;
+    border-radius: 22px;
+  }
+
+  .bigword {
+    font-size: clamp(1.8rem, 9vw, 2.7rem);
+  }
+
+  .zh {
+    font-size: clamp(1.45rem, 7.5vw, 2.05rem);
+  }
+
+  .modebar {
+    gap: 6px;
+  }
+
+  .pill {
+    font-size: .76rem;
+    padding: 6px 9px;
+  }
+
+  .letter-grid {
+    gap: 6px;
+    row-gap: 12px;
+    margin-top: 18px;
+  }
+
+  .letter-box {
+    width: 34px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+
+  .answer-static {
+    font-size: 1.1rem;
+  }
+
+  .word-gap {
+    width: 10px;
+  }
+
+  .feedback {
+    font-size: .98rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .app {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .panel {
+    padding: 16px 11px;
+  }
+
+  .choice {
+    padding: 15px 13px;
+  }
+
+  .flashcard,
+  .face {
+    min-height: 275px;
+  }
+
+  .face {
+    padding: 20px 14px;
+  }
+
+  .letter-grid {
+    gap: 4px;
+    row-gap: 10px;
+    padding: 0;
+  }
+
+  .letter-box {
+    width: 30px;
+    height: 42px;
+    font-size: 1.12rem;
+  }
+
+  .btn {
+    flex: 1 1 30%;
+    min-width: 84px;
+  }
+
+  .footer-actions {
+    width: 100%;
+  }
+}
+
+/* Landscape phones */
+@media (max-height: 520px) and (orientation: landscape) {
+  .app {
+    padding-top: 8px;
+  }
+
+  .topbar {
+    margin-bottom: 8px;
+  }
+
+  .panel {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .flashcard,
+  .face {
+    min-height: 220px;
+  }
+
+  .face {
+    padding: 16px;
+  }
+
+  .flash-wrap,
+  .spell-card {
+    margin-top: 10px;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="top-left">
+      <button type="button" class="back-btn hidden" id="backBtn" aria-label="Previous" title="Previous">←</button>
+      <div>
+        <div class="brand">Word Skills Flashcards</div>
+        <div class="small">Units 50 · 51 · 52 · 73</div>
+      </div>
+    </div>
+    <button type="button" class="btn hidden" id="homeBtn">Home</button>
+  </div>
+
+  <section id="home" class="panel">
+    <h1>Choose a Unit</h1>
+    
+    <div class="grid" id="unitGrid"></div>
+  </section>
+
+  <section id="mode" class="panel hidden">
+    <h2>Choose a Mode</h2>
+    <div class="grid">
+      <button class="choice modeChoice" data-mode="zh-en"><strong>Chinese → English</strong></button>
+      <button class="choice modeChoice" data-mode="en-zh"><strong>English → Chinese</strong></button>
+      <button class="choice modeChoice" data-mode="spelling"><strong>Spelling</strong></button>
+    </div>
+    <div class="checkrow">
+      <label><input type="checkbox" id="shuffleOn" checked> Shuffle</label>
+    </div>
+  </section>
+
+  <section id="spellMode" class="panel hidden">
+    <h2>Spelling</h2>
+    
+    <div class="grid">
+      <button class="choice spellModeChoice" data-spellmode="zh">
+        <strong>Chinese → English</strong>
+      </button>
+      <button class="choice spellModeChoice" data-spellmode="definition">
+        <strong>Definition → English</strong>
+      </button>
+    </div>
+  </section>
+
+  <section id="study" class="hidden">
+    <div class="panel">
+      <div class="modebar">
+        <span class="pill" id="unitPill"></span>
+        <span class="pill" id="modePill"></span>
+        <span class="pill" id="countPill"></span>
+      </div>
+      <div class="progress"><div id="progressBar"></div></div>
+
+      <div id="flashArea" class="flash-wrap">
+        <div class="flashcard" id="flashcard">
+          <div class="face front" id="frontFace"></div>
+          <div class="face back" id="backFace"></div>
+        </div>
+        <div class="footer-actions">
+          <button type="button" class="btn" id="againBtn">Again</button>
+          <button type="button" class="btn primary" id="flipBtn">Flip</button>
+          <button type="button" class="btn yellow" id="nextBtn">Next</button>
+        </div>
+      </div>
+
+      <div id="spellArea" class="spell-card hidden">
+        <div id="spellPrompt"></div>
+        <div id="letterGrid" class="letter-grid" aria-label="Spelling answer"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="footer-actions">
+          <button type="button" class="btn" id="spellAgainBtn">Show answer</button>
+          <button type="button" class="btn primary" id="checkBtn">Check</button>
+          <button type="button" class="btn yellow hidden" id="spellNextBtn">Next</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="done" class="panel hidden summary">
+    <div class="small">Finished</div>
+    <div class="num" id="doneScore"></div>
+    <div id="doneText" style="margin-bottom:18px"></div>
+    <div class="footer-actions">
+      <button type="button" class="btn primary" id="reviewBtn">Review mistakes</button>
+      <button type="button" class="btn yellow" id="restartBtn">Study again</button>
+    </div>
+  </section>
+</div>
+
+<script>
+const DB = [{"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "the young", "pos": "N (pl)", "zh": "年青人們", "definition": "young people considered as a group", "definition_source": "book", "card_kind": "core", "spelling_answer": "the young"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "suffer (from sth)", "pos": "V", "zh": "受…折磨", "definition": "have the experience of sth bad", "definition_source": "book", "card_kind": "core", "spelling_answer": "suffer from"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "around the world", "pos": "prep phrase", "zh": "全球各地", "definition": "everywhere; all parts of the world", "definition_source": "book", "card_kind": "core", "spelling_answer": "around the world"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "asthma", "pos": "N", "zh": "哮喘", "definition": "a medical condition which makes it difficult to breathe", "definition_source": "book", "card_kind": "core", "spelling_answer": "asthma"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "various", "pos": "adj", "zh": "各種各樣的", "definition": "several different", "definition_source": "book", "card_kind": "core", "spelling_answer": "various"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "breathing", "pos": "gerund", "zh": "呼吸", "definition": "taking air in and letting out air through your nose and mouth", "definition_source": "book", "card_kind": "core", "spelling_answer": "breathing"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "difficulty", "pos": "N", "zh": "困難", "definition": "a problem; sth that is not easy to do", "definition_source": "book", "card_kind": "core", "spelling_answer": "difficulty"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "allergy", "pos": "N [C]", "zh": "敏感(症)", "definition": "a medical condition that makes you ill when you touch, eat or breathe sth that doesn't normally make other people ill", "definition_source": "book", "card_kind": "core", "spelling_answer": "allergy"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "mental", "pos": "adj", "zh": "精神的", "definition": "of or in your mind", "definition_source": "book", "card_kind": "core", "spelling_answer": "mental"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "issue", "pos": "N", "zh": "問題；議題", "definition": "an important problem that people talk about", "definition_source": "book", "card_kind": "core", "spelling_answer": "issue"}, {"unit": "50", "topic": "Health Issues", "section": "A. Diseases of the young", "term": "treat", "pos": "V", "zh": "治療", "definition": "try to make a sick person well again", "definition_source": "book", "card_kind": "core", "spelling_answer": "treat"}, {"unit": "50", "topic": "Health Issues", "section": "Spotlight", "term": "disease", "pos": "N", "zh": "(具體的)疾病", "definition": "a serious physical medical problem", "definition_source": "book", "card_kind": "core", "spelling_answer": "disease"}, {"unit": "50", "topic": "Health Issues", "section": "Spotlight", "term": "illness", "pos": "N", "zh": "生病(狀態)", "definition": "a period when you are not well", "definition_source": "book", "card_kind": "core", "spelling_answer": "illness"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "ageing", "pos": "adj", "zh": "變老的；老化的", "definition": "becoming older", "definition_source": "book", "card_kind": "core", "spelling_answer": "ageing"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "economic", "pos": "adj.", "zh": "(有關)經濟的", "definition": "connected with the way people and countries spend money and make, buy and sell things", "definition_source": "book", "card_kind": "core", "spelling_answer": "economic"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "limit sth (to sb)", "pos": "V.", "zh": "限制", "definition": "keep sth below a certain amount, size, degree, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "limit to"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "care for sb", "pos": "phrasal verb", "zh": "照顧", "definition": "do the things for sb that they need", "definition_source": "book", "card_kind": "core", "spelling_answer": "care for"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "the elderly", "pos": "N", "zh": "老年人們", "definition": "a polite way of saying old people", "definition_source": "book", "card_kind": "core", "spelling_answer": "the elderly"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "equally", "pos": "adv", "zh": "平等地；相同地", "definition": "in the same way", "definition_source": "book", "card_kind": "core", "spelling_answer": "equally"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "save (money)", "pos": "V", "zh": "儲錢", "definition": "keep or not spend money so you can spend it later", "definition_source": "book", "card_kind": "core", "spelling_answer": "save money"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "old age", "pos": "N phr", "zh": "老年，晚年", "definition": "the part of your life when you are old", "definition_source": "book", "card_kind": "core", "spelling_answer": "old age"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "working", "pos": "adj", "zh": "(有)工作的", "definition": "employed; having a job", "definition_source": "book", "card_kind": "core", "spelling_answer": "working"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "tax", "pos": "N", "zh": "稅", "definition": "money that you have to pay to the government", "definition_source": "book", "card_kind": "core", "spelling_answer": "tax"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "strength", "pos": "N", "zh": "力量;體力; (強項/優勢)", "definition": "how strong you are", "definition_source": "book", "card_kind": "core", "spelling_answer": "strength"}, {"unit": "50", "topic": "Health Issues", "section": "B. An ageing population", "term": "fit", "pos": "adj", "zh": "健壯的，健康的", "definition": "healthy and strong", "definition_source": "book", "card_kind": "core", "spelling_answer": "fit"}, {"unit": "50", "topic": "Health Issues", "section": "Spotlight", "term": "as [adj./adv.] as possible", "pos": "pattern", "zh": "盡可能地", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "as as possible"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "system", "pos": "N", "zh": "體制，制度", "definition": "a set of ideas or rules for organizing sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "system"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "election", "pos": "N", "zh": "選舉", "definition": "the time of choosing a Member of Parliament, President, etc. by voting", "definition_source": "book", "card_kind": "core", "spelling_answer": "election"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "hold an election", "pos": "N phr", "zh": "舉行選舉", "definition": "organize an election", "definition_source": "book", "card_kind": "core", "spelling_answer": "hold an election"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "vote (for sb/sth)", "pos": "V", "zh": "投票給(某人/某事)", "definition": "choose sb/sth in an election", "definition_source": "book", "card_kind": "core", "spelling_answer": "vote for"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "represent", "pos": "V", "zh": "代表(某人/某事)", "definition": "speak or do sth in place of another person or a group", "definition_source": "book", "card_kind": "core", "spelling_answer": "represent"}, {"unit": "51", "topic": "Politics", "section": "Spotlight", "term": "politics", "pos": "N", "zh": "政治", "definition": "the work and ideas that are connected with government", "definition_source": "book", "card_kind": "core", "spelling_answer": "politics"}, {"unit": "51", "topic": "Politics", "section": "Spotlight", "term": "politician", "pos": "N", "zh": "從政者;政客", "definition": "somebody who works in politics", "definition_source": "book", "card_kind": "core", "spelling_answer": "politician"}, {"unit": "51", "topic": "Politics", "section": "Spotlight", "term": "political party", "pos": "N phr", "zh": "政黨", "definition": "a group of people with the same ideas who want to win an election", "definition_source": "book", "card_kind": "core", "spelling_answer": "political party"}, {"unit": "51", "topic": "Politics", "section": "Spotlight", "term": "Labour Party", "pos": "N phr", "zh": "工黨", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "Labour Party"}, {"unit": "51", "topic": "Politics", "section": "Spotlight", "term": "Conservative Party", "pos": "N phr", "zh": "保守黨", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "Conservative Party"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "in power", "pos": "prep phr", "zh": "當權", "definition": "in political control of a country", "definition_source": "book", "card_kind": "core", "spelling_answer": "in power"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "Member of Parliament", "pos": "N phr", "zh": "議員", "definition": "a person who has been elected to represent people from a particular area in Parliament", "definition_source": "book", "card_kind": "core", "spelling_answer": "Member of Parliament"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "parliament", "pos": "N", "zh": "議會", "definition": "the group of people elected to make the laws in a country", "definition_source": "book", "card_kind": "core", "spelling_answer": "parliament"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "majority", "pos": "N", "zh": "大多數", "definition": "the largest number or part of sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "majority"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "government", "pos": "N", "zh": "政府", "definition": "the group of people in control of a country", "definition_source": "book", "card_kind": "core", "spelling_answer": "government"}, {"unit": "51", "topic": "Politics", "section": "A. The British political system", "term": "prime minister", "pos": "N", "zh": "總理", "definition": "the leader of the government in some countries", "definition_source": "book", "card_kind": "core", "spelling_answer": "prime minister"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "focus (on sth)", "pos": "V", "zh": "專注於", "definition": "give all your attention to sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "focus on"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "need (for sth)", "pos": "N", "zh": "需要", "definition": "a situation in which you must have or do sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "need for"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "(be) due (to do sth)", "pos": "adj", "zh": "預計的，預期的", "definition": "arranged or expected", "definition_source": "book", "card_kind": "core", "spelling_answer": "be due to do"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "announce", "pos": "V", "zh": "宣佈", "definition": "say sth officially and in public", "definition_source": "book", "card_kind": "core", "spelling_answer": "announce"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "policy", "pos": "N", "zh": "政策", "definition": "a plan to do sth, agreed by a government, company, etc.", "definition_source": "book", "card_kind": "core", "spelling_answer": "policy"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "measure", "pos": "N", "zh": "方法，措施", "definition": "an official action that is done for a special reason", "definition_source": "book", "card_kind": "core", "spelling_answer": "measure"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "persuade sb (to do sth)", "pos": "V", "zh": "說服某人", "definition": "make sb think sth or do sth by giving them good reasons", "definition_source": "book", "card_kind": "core", "spelling_answer": "persuade to do"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "objective", "pos": "N", "zh": "目的", "definition": "sth that you want and plan to do", "definition_source": "book", "card_kind": "core", "spelling_answer": "objective"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "put sth forward", "pos": "phrasal V", "zh": "提出", "definition": "suggest sth for discussion", "definition_source": "book", "card_kind": "core", "spelling_answer": "put forward"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "law", "pos": "N", "zh": "法律", "definition": "a rule of a country that says what people may or may not do", "definition_source": "book", "card_kind": "core", "spelling_answer": "law"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "protect", "pos": "V", "zh": "保護;保障", "definition": "keep sb/sth safe", "definition_source": "book", "card_kind": "core", "spelling_answer": "protect"}, {"unit": "51", "topic": "Politics", "section": "B. Political objectives", "term": "immigrant", "pos": "N", "zh": "移民(的人)", "definition": "a person who comes from one country to another country to live there", "definition_source": "book", "card_kind": "core", "spelling_answer": "immigrant"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "bomb", "pos": "N", "zh": "炸彈", "definition": "a thing that explodes and hurts people or damages things", "definition_source": "book", "card_kind": "core", "spelling_answer": "bomb"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "explode", "pos": "V", "zh": "爆炸", "definition": "burst with force and a loud noise", "definition_source": "book", "card_kind": "core", "spelling_answer": "explode"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "Injure", "pos": "V", "zh": "損害", "definition": "hurt sb, often in a fight or accident", "definition_source": "book", "card_kind": "core", "spelling_answer": "Injure"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "fight", "pos": "V", "zh": "打鬥", "definition": "use physical strength, guns, weapons, etc. against sb/sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "fight"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "battle", "pos": "N", "zh": "戰鬥", "definition": "a fight between armies in a war", "definition_source": "book", "card_kind": "core", "spelling_answer": "battle"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "fire (at sb.)", "pos": "V", "zh": "向...開槍", "definition": "shoot bullets from a gun", "definition_source": "book", "card_kind": "core", "spelling_answer": "fire at"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "enemy", "pos": "N", "zh": "敵人", "definition": "the people your army or country is fighting against", "definition_source": "book", "card_kind": "core", "spelling_answer": "enemy"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "leader", "pos": "N", "zh": "領導人", "definition": "a person who controls a group or team", "definition_source": "book", "card_kind": "core", "spelling_answer": "leader"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "escape", "pos": "V", "zh": "逃走", "definition": "get free from sb/sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "escape"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "weapon", "pos": "N", "zh": "武器", "definition": "sth, such as a gun or knife, that is used to kill or injure people", "definition_source": "book", "card_kind": "core", "spelling_answer": "weapon"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "army", "pos": "N", "zh": "軍隊", "definition": "a large group of soldiers who fight on land in a war", "definition_source": "book", "card_kind": "core", "spelling_answer": "army"}, {"unit": "52", "topic": "War & Peace", "section": "A. War", "term": "be in control (of sth)", "pos": "prep phrase", "zh": "掌控全局", "definition": "have the power or ability to deal with sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "be in control of"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "at war", "pos": "prep phrase", "zh": "在戰爭中", "definition": "fighting with weapons against different groups or countries, usually for a long time", "definition_source": "book", "card_kind": "core", "spelling_answer": "at war"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "(be) involved (in sth)", "pos": "adj.", "zh": "有關的;牽涉到的", "definition": "being part of sth or connected with sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "be involved in"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "talks", "pos": "N", "zh": "會談", "definition": "formal discussions between countries and their governments", "definition_source": "book", "card_kind": "core", "spelling_answer": "talks"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "fighting", "pos": "N", "zh": "戰鬥", "definition": "the activity of fighting against the enemy", "definition_source": "book", "card_kind": "core", "spelling_answer": "fighting"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "attempt (at sth)", "pos": "N", "zh": "努力嘗試做某事", "definition": "trying to do sth that is difficult", "definition_source": "book", "card_kind": "core", "spelling_answer": "attempt at"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "peace", "pos": "N", "zh": "和平", "definition": "a time when there is no war between people or countries", "definition_source": "book", "card_kind": "core", "spelling_answer": "peace"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "reject", "pos": "V", "zh": "拒絕", "definition": "say that you do not want sb/sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "reject"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "within", "pos": "prep", "zh": "在…內", "definition": "before the end of", "definition_source": "book", "card_kind": "core", "spelling_answer": "within"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "agreement", "pos": "N", "zh": "協議；和約", "definition": "a contract or decision that two or more people have made together", "definition_source": "book", "card_kind": "core", "spelling_answer": "agreement"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "side", "pos": "N", "zh": "（多個相互對立的）一方", "definition": "one of two groups who fight or play a game against each other", "definition_source": "book", "card_kind": "core", "spelling_answer": "side"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "determined", "pos": "adj.", "zh": "下定決心的，堅決的", "definition": "very certain that you want to do sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "determined"}, {"unit": "52", "topic": "War & Peace", "section": "B. Peace", "term": "lasting", "pos": "adj.", "zh": "持續的，持久的", "definition": "continuing for a long time", "definition_source": "book", "card_kind": "core", "spelling_answer": "lasting"}, {"unit": "52", "topic": "War & Peace", "section": "Spotlight", "term": "reach an agreement", "pos": "collocation", "zh": "達成協議", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "reach an agreement"}, {"unit": "52", "topic": "War & Peace", "section": "Spotlight", "term": "make an attempt", "pos": "collocation", "zh": "做出努力", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "make an attempt"}, {"unit": "52", "topic": "War & Peace", "section": "Spotlight", "term": "hold talks", "pos": "collocation", "zh": "舉行會談", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "hold talks"}, {"unit": "52", "topic": "War & Peace", "section": "Spotlight", "term": "go to war", "pos": "collocation", "zh": "開戰", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "go to war"}, {"unit": "73", "topic": "Linking Ideas", "section": "A. Reason, result and addition", "term": "since", "pos": "linker", "zh": "因爲", "definition": "because, as", "definition_source": "book", "card_kind": "core", "spelling_answer": "since"}, {"unit": "73", "topic": "Linking Ideas", "section": "A. Reason, result and addition", "term": "as a result", "pos": "linker", "zh": "因此", "definition": "because of sth that happened before", "definition_source": "book", "card_kind": "core", "spelling_answer": "as a result"}, {"unit": "73", "topic": "Linking Ideas", "section": "A. Reason, result and addition", "term": "due to sth", "pos": "linker", "zh": "因爲", "definition": "because of sth", "definition_source": "book", "card_kind": "core", "spelling_answer": "due to"}, {"unit": "73", "topic": "Linking Ideas", "section": "A. Reason, result and addition", "term": "plus", "pos": "linker", "zh": "並且；加上", "definition": "used to add more information", "definition_source": "book", "card_kind": "core", "spelling_answer": "plus"}, {"unit": "73", "topic": "Linking Ideas", "section": "A. Reason, result and addition", "term": "as well", "pos": "linker", "zh": "除…之外還；也", "definition": "We usually put as well at the end of a clause (= a part of a sentence that includes a subject and a verb).", "definition_source": "book", "card_kind": "core", "spelling_answer": "as well"}, {"unit": "73", "topic": "Linking Ideas", "section": "A. Reason, result and addition", "term": "not only ... but also", "pos": "linker", "zh": "不但…而且", "definition": "used to emphasize that sth else is also true", "definition_source": "book", "card_kind": "core", "spelling_answer": "not only... but also"}, {"unit": "73", "topic": "Linking Ideas", "section": "A. Reason, result and addition", "term": "in addition (to sth/sb)", "pos": "linker", "zh": "並且；加上", "definition": "used when you want to mention another person or thing after sth else", "definition_source": "book", "card_kind": "core", "spelling_answer": "in addition to"}, {"unit": "73", "topic": "Linking Ideas", "section": "A. Reason, result and addition", "term": "as a consequence (of sth)", "pos": "linker", "zh": "結果；因此", "definition": "used to say one thing is the result of another", "definition_source": "book", "card_kind": "core", "spelling_answer": "as a consequence of"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "although", "pos": "linker", "zh": "雖然;儘管", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "although"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "though", "pos": "linker", "zh": "雖然;儘管", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "though"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "even though", "pos": "linker", "zh": "雖然;儘管", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "even though"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "despite", "pos": "linker", "zh": "雖然;儘管", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "despite"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "in spite of", "pos": "linker", "zh": "雖然;儘管", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "in spite of"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "on the one hand...but on the other (hand)", "pos": "linker", "zh": "一方面...但另一方面", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "on the one hand...but on the other hand"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "however", "pos": "linker", "zh": "但是", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "however"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "all the same", "pos": "linker", "zh": "依然，照樣", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "all the same"}, {"unit": "73", "topic": "Linking Ideas", "section": "B. Contrasting ideas", "term": "still", "pos": "linker / adv.", "zh": "還是；仍然", "definition": "", "definition_source": "", "card_kind": "core", "spelling_answer": "still"}];
+const UNIT_INFO = {
+  "50":["Health Issues","Health"],
+  "51":["Politics","Politics"],
+  "52":["War & Peace","War & Peace"],
+  "73":["Linking Ideas","Linking"]
+};
+
+let chosenUnit = null, mode = null, spellingMode = "zh", deck = [], index = 0, mistakes = [], correctCount = 0, spellingAnswered=false;
+
+const $ = id => document.getElementById(id);
+const screens = ["home","mode","spellMode","study","done"];
+let currentScreen = "home";
+let previousScreen = null;
+
+function show(id, remember=true) {
+  if(remember && currentScreen !== id) previousScreen = currentScreen;
+  currentScreen = id;
+  screens.forEach(x=>$(x).classList.toggle("hidden",x!==id));
+  $("homeBtn").classList.toggle("hidden",id==="home");
+  $("backBtn").classList.toggle("hidden",id==="home");
+}
+
+function goBack(){
+  if(currentScreen==="mode") return show("home", false);
+  if(currentScreen==="spellMode") return show("mode", false);
+
+  if(currentScreen==="study"){
+    if(index > 0){
+      index--;
+      spellingAnswered=false;
+      render();
+      return;
+    }
+    return show(mode==="spelling" ? "spellMode" : "mode", false);
+  }
+
+  if(currentScreen==="done"){
+    if(deck.length > 0){
+      index = Math.max(0, deck.length - 1);
+      spellingAnswered=false;
+      show("study", false);
+      render();
+      return;
+    }
+    return show(mode==="spelling" ? "spellMode" : "mode", false);
+  }
+
+  show("home", false);
+}
+function shuffle(arr) {
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function selectThen(button, action){
+  document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));
+  button.classList.add("selected");
+  setTimeout(action, 230);
+}
+function buildHome(){
+  const units=["50","51","52","73","all"];
+  $("unitGrid").innerHTML = units.map(u=>{
+    if(u==="all") return `<button class="choice unitChoice" data-unit="all"><strong>All Units</strong><span class="small">50 · 51 · 52 · 73</span><span class="badge">${DB.length} cards</span></button>`;
+    const n=DB.filter(x=>x.unit===u && x.card_kind==="core").length;
+    return `<button class="choice unitChoice" data-unit="${u}"><strong>Unit ${u}</strong><span class="small">${UNIT_INFO[u][0]}</span><span class="badge">${n} core cards</span></button>`;
+  }).join("");
+  document.querySelectorAll(".unitChoice").forEach(b=>b.onclick=()=>selectThen(b,()=>{chosenUnit=b.dataset.unit;show("mode");}));
+}
+function startStudy(){
+  let d = chosenUnit==="all" ? [...DB] : DB.filter(x=>x.unit===chosenUnit);
+  if(mode==="spelling" && spellingMode==="definition"){
+    d=d.filter(x=>x.definition && x.definition.trim());
+  }
+  if($("shuffleOn").checked) d=shuffle(d);
+  deck=d; index=0; mistakes=[]; correctCount=0;
+  $("unitPill").textContent = chosenUnit==="all" ? "All Units" : `Unit ${chosenUnit}`;
+  $("modePill").textContent = mode==="zh-en" ? "Chinese → English" : mode==="en-zh" ? "English → Chinese" : (spellingMode==="definition" ? "Definition → Spell" : "Chinese → Spell");
+  $("flashArea").classList.toggle("hidden",mode==="spelling");
+  $("spellArea").classList.toggle("hidden",mode!=="spelling");
+  show("study");
+  if(deck.length===0){
+    $("countPill").textContent="0 cards";
+    $("progressBar").style.width="0%";
+    $("spellPrompt").innerHTML='<div class="zh">Definitions will appear here.</div><div class="meta">Add the book definitions to the database first.</div>';
+    $("letterGrid").innerHTML="";
+    $("checkBtn").classList.add("hidden");
+    $("spellNextBtn").classList.add("hidden");
+    $("spellAgainBtn").classList.add("hidden");
+    return;
+  }
+  $("spellAgainBtn").classList.remove("hidden");
+  render();
+}
+function noteHTML(c){ return ""; }
+function render(){
+  if(index>=deck.length) return finish();
+  const c=deck[index];
+  $("countPill").textContent=`${index+1} / ${deck.length}`;
+  $("progressBar").style.width=`${(index/deck.length)*100}%`;
+  if(mode==="spelling"){
+    spellingAnswered=false;
+    $("feedback").textContent="";
+    $("feedback").className="feedback";
+    $("spellNextBtn").classList.add("hidden");
+    $("checkBtn").classList.remove("hidden");
+    $("spellPrompt").innerHTML = spellingMode==="definition"
+      ? `<div class="small" style="margin-bottom:10px">Definition</div><div class="zh">${c.definition}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`
+      : `<div class="zh">${c.zh}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`;
+    buildLetterGrid(c.term);
+  } else {
+    $("flashcard").classList.remove("flipped");
+    const front = mode==="zh-en"
+      ? `<div class="zh">${c.zh}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`
+      : `<div class="bigword">${c.term}</div><div class="meta">${c.pos} · Unit ${c.unit}</div>`;
+    const back = mode==="zh-en"
+      ? `<div class="bigword">${c.term}</div><div class="meta">${c.pos}</div>${noteHTML(c)}`
+      : `<div class="zh">${c.zh}</div><div class="meta">${c.pos}</div>${noteHTML(c)}`;
+    $("frontFace").innerHTML=front; $("backFace").innerHTML=back;
+  }
+}
+function markAgain(){
+  const c=deck[index];
+  if(!mistakes.includes(c)) mistakes.push(c);
+  index++; render();
+}
+function next(){ index++; render(); }
+function normalize(s){return s.toLowerCase().trim().replace(/[’']/g,"'").replace(/\s+/g," ");}
+
+function spellingAnswer(term){
+  const c = deck[index];
+  if(c && c.spelling_answer) return c.spelling_answer;
+  return term
+    .replace(/\b(sth|sb)\b/gi,"")
+    .replace(/[()]/g,"")
+    .replace(/\s+/g," ")
+    .trim();
+}
+
+function answerChars(term){
+  return [...spellingAnswer(term)];
+}
+
+function buildLetterGrid(term){
+  const grid=$("letterGrid");
+  grid.innerHTML="";
+  const chars=answerChars(term);
+  let letterIndex=0;
+
+  chars.forEach((ch,i)=>{
+    if(/[A-Za-z]/.test(ch)){
+      const inp=document.createElement("input");
+      inp.className="letter-box";
+      inp.maxLength=1;
+      inp.dataset.charIndex=i;
+      inp.dataset.letterIndex=letterIndex++;
+      inp.autocomplete="off";
+      inp.autocapitalize="off";
+      inp.spellcheck=false;
+      inp.inputMode="text";
+      inp.setAttribute("aria-label",`Letter ${letterIndex}`);
+      inp.addEventListener("input",e=>{
+        let v=(e.target.value||"").replace(/[^A-Za-z]/g,"");
+        e.target.value=v ? v.slice(-1).toLowerCase() : "";
+        e.target.classList.remove("wrong-box","correct-box");
+        if(e.target.value){
+          const inputs=[...grid.querySelectorAll(".letter-box")];
+          const idx=inputs.indexOf(e.target);
+          if(idx>=0 && idx<inputs.length-1) inputs[idx+1].focus();
+        }
+      });
+      inp.addEventListener("keydown",e=>{
+        const inputs=[...grid.querySelectorAll(".letter-box")];
+        const idx=inputs.indexOf(e.target);
+        if(e.key==="Backspace" && !e.target.value && idx>0){
+          inputs[idx-1].focus();
+        }else if(e.key==="Enter"){
+          e.preventDefault();
+          if(!spellingAnswered) checkSpelling(); else next();
+        }else if(e.key==="ArrowLeft" && idx>0){
+          e.preventDefault(); inputs[idx-1].focus();
+        }else if(e.key==="ArrowRight" && idx<inputs.length-1){
+          e.preventDefault(); inputs[idx+1].focus();
+        }
+      });
+      inp.addEventListener("paste",e=>{
+        e.preventDefault();
+        const pasted=(e.clipboardData.getData("text")||"").replace(/[^A-Za-z]/g,"").toLowerCase();
+        const inputs=[...grid.querySelectorAll(".letter-box")];
+        const start=inputs.indexOf(e.target);
+        for(let k=0;k<pasted.length && start+k<inputs.length;k++){
+          inputs[start+k].value=pasted[k];
+        }
+        const target=Math.min(start+pasted.length,inputs.length-1);
+        inputs[target].focus();
+      });
+      grid.appendChild(inp);
+    }else if(ch===" "){
+      const sp=document.createElement("span");
+      sp.className="word-gap";
+      grid.appendChild(sp);
+    }else{
+      const st=document.createElement("span");
+      st.className="answer-static";
+      st.textContent=ch;
+      grid.appendChild(st);
+    }
+  });
+
+  setTimeout(()=>{
+    const first=grid.querySelector(".letter-box");
+    if(first) first.focus();
+  },50);
+}
+
+function getTypedSpelling(){
+  const answer=spellingAnswer(deck[index].term);
+  const letters=[...$("letterGrid").querySelectorAll(".letter-box")].map(x=>x.value.toLowerCase());
+  let p=0, out="";
+  for(const ch of [...answer]){
+    if(/[A-Za-z]/.test(ch)) out += letters[p++] || "";
+    else out += ch;
+  }
+  return normalize(out);
+}
+
+function setLetterBoxesState(isCorrect){
+  const inputs=[...$("letterGrid").querySelectorAll(".letter-box")];
+  const correctLetters=[...spellingAnswer(deck[index].term)].filter(ch=>/[A-Za-z]/.test(ch));
+  inputs.forEach((inp,i)=>{
+    const ok=(inp.value||"").toLowerCase()===correctLetters[i].toLowerCase();
+    inp.classList.add(ok ? "correct-box" : "wrong-box");
+    inp.disabled=true;
+  });
+}
+
+
+function playCorrectSound(){
+  try{
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const now = ctx.currentTime;
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+
+    const o1 = ctx.createOscillator();
+    o1.type = "sine";
+    o1.frequency.setValueAtTime(659.25, now);
+    o1.connect(gain);
+    o1.start(now);
+    o1.stop(now + 0.16);
+
+    const o2 = ctx.createOscillator();
+    o2.type = "sine";
+    o2.frequency.setValueAtTime(783.99, now + 0.10);
+    o2.connect(gain);
+    o2.start(now + 0.10);
+    o2.stop(now + 0.30);
+
+    setTimeout(()=>ctx.close(), 500);
+  }catch(e){}
+}
+
+function checkSpelling(){
+  if(spellingAnswered) return;
+  const ans=getTypedSpelling();
+  const correct=normalize(spellingAnswer(deck[index].term));
+  spellingAnswered=true;
+
+  if(ans===correct){
+    correctCount++;
+    playCorrectSound();
+    setLetterBoxesState(true);
+    $("feedback").textContent="Correct ✓";
+    $("feedback").className="feedback right";
+  } else {
+    if(!mistakes.includes(deck[index])) mistakes.push(deck[index]);
+    setLetterBoxesState(false);
+    $("feedback").innerHTML=`Not quite. <b>${spellingAnswer(deck[index].term)}</b>`;
+    $("feedback").className="feedback wrong";
+  }
+  $("checkBtn").classList.add("hidden");
+  $("spellNextBtn").classList.remove("hidden");
+}
+
+function showSpellAnswer(){
+  if(!mistakes.includes(deck[index])) mistakes.push(deck[index]);
+  const answer=spellingAnswer(deck[index].term);
+  const inputs=[...$("letterGrid").querySelectorAll(".letter-box")];
+  const correctLetters=[...answer].filter(ch=>/[A-Za-z]/.test(ch));
+  inputs.forEach((inp,i)=>{
+    inp.value=(correctLetters[i]||"").toLowerCase();
+    inp.classList.add("correct-box");
+    inp.disabled=true;
+  });
+  $("feedback").innerHTML=`Answer: <b>${answer}</b>`;
+  $("feedback").className="feedback";
+  spellingAnswered=true;
+  $("checkBtn").classList.add("hidden");
+  $("spellNextBtn").classList.remove("hidden");
+}
+function finish(){
+  $("progressBar").style.width="100%";
+  const reviewed=deck.length;
+  const weak=mistakes.length;
+  $("doneScore").textContent = mode==="spelling" ? `${correctCount} / ${reviewed}` : `${reviewed-weak} / ${reviewed}`;
+  $("doneText").textContent = weak ? `${weak} card${weak===1?"":"s"} to review.` : "Great — no cards marked for review.";
+  $("reviewBtn").classList.toggle("hidden",weak===0);
+  show("done");
+}
+buildHome();
+document.querySelectorAll(".modeChoice").forEach(b=>b.onclick=()=>selectThen(b,()=>{
+  mode=b.dataset.mode;
+  if(mode==="spelling") show("spellMode");
+  else startStudy();
+}));
+document.querySelectorAll(".spellModeChoice").forEach(b=>b.onclick=()=>selectThen(b,()=>{
+  spellingMode=b.dataset.spellmode;
+  startStudy();
+}));
+$("homeBtn").onclick=()=>show("home");
+$("backBtn").onclick=goBack;
+$("flashcard").onclick=()=>$("flashcard").classList.toggle("flipped");
+$("flipBtn").onclick=()=>$("flashcard").classList.toggle("flipped");
+$("againBtn").onclick=markAgain;
+$("nextBtn").onclick=next;
+$("checkBtn").onclick=checkSpelling;
+$("spellAgainBtn").onclick=showSpellAnswer;
+$("spellNextBtn").onclick=next;
+$("reviewBtn").onclick=()=>{deck=shuffle([...mistakes]);index=0;mistakes=[];correctCount=0;show("study");render();};
+$("restartBtn").onclick=()=>startStudy();
+</script>
+</body>
+</html>
